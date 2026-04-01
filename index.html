@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion 一日實作班｜報名前測驗</title>
+  <style>
+    :root {
+      --teal:         #21A4B1;
+      --teal-dark:    #187F8A;
+      --teal-light:   #EDF8FA;
+      --teal-border:  #B2E0E5;
+      --orange:       #E77E47;
+      --orange-light: #FEF3EC;
+      --bg:           #F6F7F5;
+      --card:         #FFFFFF;
+      --text-h:       #111111;
+      --text-body:    #3D3D3D;
+      --text-muted:   #888888;
+      --border:       #E5E5E5;
+      --red:          #D94F4F;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+      background: var(--bg);
+      color: var(--text-body);
+      min-height: 100vh;
+      padding: 32px 20px 80px;
+      line-height: 1.6;
+    }
+
+    .container { max-width: 660px; margin: 0 auto; }
+
+    /* ── Header ─────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 52px;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--teal);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 5px 14px;
+      border-radius: 100px;
+      margin-bottom: 22px;
+    }
+    .header h1 {
+      font-size: clamp(24px, 5.5vw, 34px);
+      font-weight: 800;
+      color: var(--text-h);
+      line-height: 1.25;
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+    .header h1 em {
+      font-style: normal;
+      color: var(--teal);
+    }
+    .header p {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* ── Progress ────────────────────────────────────── */
+    .progress-wrap { margin-bottom: 44px; }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .progress-meta strong { color: var(--teal); font-weight: 600; }
+    .progress-bar-bg {
+      background: var(--border);
+      border-radius: 100px;
+      height: 5px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--teal);
+      border-radius: 100px;
+      transition: width 0.45s ease;
+      width: 0%;
+    }
+
+    /* ── Section ─────────────────────────────────────── */
+    .section { margin-bottom: 44px; }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 14px;
+      background: var(--teal);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Question Card ───────────────────────────────── */
+    .question-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 26px 28px;
+      margin-bottom: 12px;
+      border: 1.5px solid var(--border);
+      transition: border-color 0.2s ease;
+    }
+    .question-card.answered { border-color: var(--teal-border); }
+    .question-card.error    { border-color: var(--red); background: #FFF8F8; }
+    .question-card.gate-card { background: #FAFCFC; }
+
+    .special-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-bottom: 12px;
+    }
+    .badge-orange { background: var(--orange-light); color: var(--orange); border: 1px solid #FBCFB2; }
+    .badge-teal   { background: var(--teal-light);   color: var(--teal-dark); border: 1px solid var(--teal-border); }
+
+    .question-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-h);
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+    .q-num {
+      flex-shrink: 0;
+      min-width: 26px;
+      height: 26px;
+      background: var(--teal);
+      color: #fff;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    /* ── Options ─────────────────────────────────────── */
+    .options { display: flex; flex-direction: column; gap: 8px; }
+
+    .option-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      padding: 13px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      font-size: 14px;
+      color: var(--text-body);
+      line-height: 1.55;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .option-label:hover {
+      background: var(--teal-light);
+      border-color: var(--teal-border);
+    }
+    .option-label input {
+      flex-shrink: 0;
+      accent-color: var(--teal);
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+    }
+    .option-label.selected {
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+    .option-key {
+      font-weight: 700;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+    .option-label.selected .option-key { opacity: 1; }
+
+    /* ── No-device notice ────────────────────────────── */
+    .device-notice {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 16px;
+      background: var(--orange-light);
+      border: 1px solid #FBCFB2;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #7A3F1A;
+      line-height: 1.65;
+    }
+
+    /* ── Submit ──────────────────────────────────────── */
+    .submit-wrap { text-align: center; padding-top: 8px; }
+    .submit-btn {
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 0;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      max-width: 380px;
+      letter-spacing: 0.02em;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover  { background: var(--teal-dark); }
+    .submit-btn:active { transform: scale(0.985); }
+
+    .error-hint {
+      display: none;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--red);
+    }
+
+    /* ── Results ─────────────────────────────────────── */
+    .results-container {
+      display: none;
+      margin-top: 48px;
+      animation: fadeUp 0.5s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-multi-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .results-multi-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-h);
+      margin-bottom: 6px;
+    }
+    .results-multi-header p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Result card */
+    .result-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 32px 28px;
+      margin-bottom: 16px;
+      border: 1.5px solid var(--border);
+      border-top: 4px solid transparent;
+    }
+    .result-card.res-physical  { border-top-color: var(--teal); }
+    .result-card.res-intensive { border-top-color: #2F2F2F; }
+    .result-card.res-selfpaced { border-top-color: var(--orange); }
+
+    .result-icon  { font-size: 40px; margin-bottom: 12px; line-height: 1; }
+    .result-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 14px;
+    }
+    .res-physical  .result-label { background: var(--teal-light);  color: var(--teal-dark); }
+    .res-intensive .result-label { background: #F0F0F0; color: #444; }
+    .res-selfpaced .result-label { background: var(--orange-light); color: #7A3F1A; }
+
+    .result-heading {
+      font-size: clamp(18px, 4vw, 21px);
+      font-weight: 700;
+      color: var(--text-h);
+      line-height: 1.4;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+    .result-body {
+      font-size: 14.5px;
+      color: var(--text-body);
+      line-height: 1.8;
+    }
+
+    .result-note {
+      margin-top: 16px;
+      padding: 12px 15px;
+      background: var(--orange-light);
+      border: 1px solid #FBCFB2;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #7A3F1A;
+      line-height: 1.65;
+    }
+
+    /* CTA button — orange, emphasis only */
+    .result-cta-btn {
+      display: inline-block;
+      margin-top: 22px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 26px;
+      border-radius: 100px;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .result-cta-btn:hover  { background: #D06A34; }
+    .result-cta-btn:active { transform: scale(0.97); }
+
+    .retry-btn {
+      display: block;
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: center;
+      transition: color 0.15s;
+    }
+    .retry-btn:hover { color: var(--text-h); }
+
+    /* ── Mobile ──────────────────────────────────────── */
+    @media (max-width: 480px) {
+      body { padding: 24px 16px 64px; }
+      .question-card  { padding: 20px 18px; }
+      .result-card    { padding: 24px 20px; }
+      .option-label   { padding: 12px 14px; font-size: 13.5px; }
+      .submit-btn     { font-size: 15px; padding: 15px 0; }
+      .result-cta-btn { display: block; text-align: center; }
+      .header { margin-bottom: 40px; }
+      .section { margin-bottom: 36px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">🧭 報名前測驗</div>
+    <h1>你適合報名<br><em>Notion 一日實作班</em>嗎？</h1>
+    <p>完成 12 題測驗，立即獲得最適合你的學習方案推薦</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="progressText">尚未開始</span>
+      <span><strong id="progressAnswered">0</strong> / 12 題</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+  </div>
+
+  <form id="quizForm" novalidate>
+
+    <!-- 設備確認 -->
+    <div class="section">
+      <div class="section-title">設備確認</div>
+
+      <div class="question-card gate-card" id="card-q1">
+        <div class="special-badge badge-orange">⚠️ 重要提醒</div>
+        <div class="question-label">
+          <span class="q-num">1</span>
+          實體課程需要學員自備設備，請問你目前的設備狀況？
+        </div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q1" value="laptop"><span class="option-key">A</span>我有筆電，可以攜帶外出</label>
+          <label class="option-label"><input type="radio" name="q1" value="tablet"><span class="option-key">B</span>我沒有筆電，但有平板可以攜帶外出</label>
+          <label class="option-label"><input type="radio" name="q1" value="none"><span class="option-key">C</span>我沒有筆電也沒有平板，也無法借到設備</label>
+        </div>
+        <div class="device-notice" id="noDeviceWarning">
+          💡 沒關係！測驗結束後會為你推薦最適合的<strong>線上學習方案</strong>，請繼續完成以下題目。
+        </div>
+      </div>
+    </div>
+
+    <!-- 一、Notion 使用經驗 -->
+    <div class="section">
+      <div class="section-title">一、Notion 使用經驗</div>
+
+      <div class="question-card" id="card-q2">
+        <div class="question-label"><span class="q-num">2</span>你使用 Notion 大約多久了？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q2" value="0"><span class="option-key">A</span>還沒用過，或不到 1 週</label>
+          <label class="option-label"><input type="radio" name="q2" value="4"><span class="option-key">B</span>1 週～3 個月</label>
+          <label class="option-label"><input type="radio" name="q2" value="8"><span class="option-key">C</span>3～12 個月</label>
+          <label class="option-label"><input type="radio" name="q2" value="10"><span class="option-key">D</span>1 年以上</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q3">
+        <div class="question-label"><span class="q-num">3</span>你使用 Notion 的頻率大約是？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q3" value="0"><span class="option-key">A</span>幾乎沒在用</label>
+          <label class="option-label"><input type="radio" name="q3" value="3"><span class="option-key">B</span>一週 1～2 次</label>
+          <label class="option-label"><input type="radio" name="q3" value="5"><span class="option-key">C</span>一週 3～5 次</label>
+          <label class="option-label"><input type="radio" name="q3" value="8"><span class="option-key">D</span>幾乎每天都用</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q4">
+        <div class="question-label"><span class="q-num">4</span>你目前有「實際在用」的 Notion 系統嗎？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q4" value="0"><span class="option-key">A</span>沒有，只開過幾個頁面試試</label>
+          <label class="option-label"><input type="radio" name="q4" value="3"><span class="option-key">B</span>有，但常常中斷，或只用來記零散筆記</label>
+          <label class="option-label"><input type="radio" name="q4" value="5"><span class="option-key">C</span>有一套固定用途（讀書筆記、工作待辦、專案整理）</label>
+          <label class="option-label"><input type="radio" name="q4" value="7"><span class="option-key">D</span>有一套跨情境在用的系統（工作＋個人＋長期整理）</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q5">
+        <div class="question-label"><span class="q-num">5</span>你是否曾有一套 Notion 系統，持續使用超過 1 個月？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q5" value="0"><span class="option-key">A</span>從來沒有</label>
+          <label class="option-label"><input type="radio" name="q5" value="3"><span class="option-key">B</span>有，但後來中斷了</label>
+          <label class="option-label"><input type="radio" name="q5" value="7"><span class="option-key">C</span>有，目前還在持續維持</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 二、核心操作能力 -->
+    <div class="section">
+      <div class="section-title">二、核心操作能力</div>
+
+      <div class="question-card" id="card-q6">
+        <div class="question-label"><span class="q-num">6</span>你對「區塊」的熟悉度（標題、清單、功能轉換、欄位排版等）</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q6" value="0"><span class="option-key">A</span>不太會用</label>
+          <label class="option-label"><input type="radio" name="q6" value="3"><span class="option-key">B</span>會基本的標題與清單</label>
+          <label class="option-label"><input type="radio" name="q6" value="6"><span class="option-key">C</span>會轉換區塊功能、引用、簡單欄位排版</label>
+          <label class="option-label"><input type="radio" name="q6" value="9"><span class="option-key">D</span>常用各種區塊整理內容，知道怎麼讓頁面更好讀</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q7">
+        <div class="question-label"><span class="q-num">7</span>你是否能獨立建立一個「資料庫」並做基本設定？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q7" value="0"><span class="option-key">A</span>不會，還不太理解資料庫是什麼</label>
+          <label class="option-label"><input type="radio" name="q7" value="3"><span class="option-key">B</span>會新增資料庫，但欄位、檢視不太會調</label>
+          <label class="option-label"><input type="radio" name="q7" value="6"><span class="option-key">C</span>會新增欄位（文字 / 選擇 / 日期），也會調整排序與篩選</label>
+          <label class="option-label"><input type="radio" name="q7" value="9"><span class="option-key">D</span>能用資料庫做出可運作的流程（任務追蹤 / 讀書 / 內容管理）</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q8">
+        <div class="question-label"><span class="q-num">8</span>你是否清楚「資料庫」和「一般頁面」的差別，以及何時該用哪個？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q8" value="0"><span class="option-key">A</span>不清楚，感覺差不多</label>
+          <label class="option-label"><input type="radio" name="q8" value="4"><span class="option-key">B</span>大概知道有差別，但不確定什麼情況該用哪個</label>
+          <label class="option-label"><input type="radio" name="q8" value="8"><span class="option-key">C</span>清楚理解，能根據情境做選擇</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q9">
+        <div class="question-label"><span class="q-num">9</span>你是否用過資料庫的進階功能（關聯、匯總、公式、頁面範本）？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q9" value="0"><span class="option-key">A</span>都沒用過，也不知道是什麼</label>
+          <label class="option-label"><input type="radio" name="q9" value="4"><span class="option-key">B</span>用過其中 1 個（關聯 Relation 或匯總 Rollup）</label>
+          <label class="option-label"><input type="radio" name="q9" value="8"><span class="option-key">C</span>用過 2 個以上（關聯、匯總、公式、按鈕、頁面範本等）</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 三、學習目標與偏好 -->
+    <div class="section">
+      <div class="section-title">三、學習目標與偏好</div>
+
+      <div class="question-card" id="card-q10">
+        <div class="question-label"><span class="q-num">10</span>你目前使用 Notion 最大的困難是？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q10" value="start"><span class="option-key">A</span>不知道怎麼開始，也不確定 Notion 能幫我做什麼</label>
+          <label class="option-label"><input type="radio" name="q10" value="build"><span class="option-key">B</span>知道想用，但不知道怎麼建立一套適合自己的系統</label>
+          <label class="option-label"><input type="radio" name="q10" value="maintain"><span class="option-key">C</span>建了系統但難以維護，常常用一用就放棄</label>
+          <label class="option-label"><input type="radio" name="q10" value="complex"><span class="option-key">D</span>想做更複雜的整合或自動化，但現在的系統不夠用</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q11">
+        <div class="question-label"><span class="q-num">11</span>你最主要想透過課程解決的問題是？</div>
+        <div class="options">
+          <label class="option-label"><input type="radio" name="q11" value="basic"><span class="option-key">A</span>搞懂 Notion 基礎邏輯，從零開始學起</label>
+          <label class="option-label"><input type="radio" name="q11" value="guided"><span class="option-key">B</span>有人帶我做出一個「能實際使用的系統 / 模板」，並學會自己改</label>
+          <label class="option-label"><input type="radio" name="q11" value="workflow"><span class="option-key">C</span>建立完整的個人工作流，能長期持續迭代</label>
+          <label class="option-label"><input type="radio" name="q11" value="advanced"><span class="option-key">D</span>我已有系統，想學進階功能（自動化、跨資料庫、Notion AI）</label>
+        </div>
+      </div>
+
+      <div class="question-card" id="card-q12">
+        <div class="special-badge badge-teal">✦ 可複選</div>
+        <div class="question-label"><span class="q-num">12</span>你偏好哪種學習方式？（可選多個）</div>
+        <div class="options">
+          <label class="option-label"><input type="checkbox" name="q12" value="physical"><span class="option-key">A</span>實體課，有講師帶著做、現場即時發問</label>
+          <label class="option-label"><input type="checkbox" name="q12" value="selfpaced"><span class="option-key">B</span>線上課程，自己買好自由安排時間，想複習隨時看</label>
+          <label class="option-label"><input type="checkbox" name="q12" value="intensive"><span class="option-key">C</span>線上陪跑，有人督促推進、高強度完成作品</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-wrap">
+      <button type="submit" class="submit-btn">查看我的學習方案推薦</button>
+      <div class="error-hint" id="errorHint">⚠️ 請完成所有 12 題再送出</div>
+    </div>
+  </form>
+
+  <!-- Results -->
+  <div class="results-container" id="resultsContainer"></div>
+
+</div>
+
+<script>
+  const qNames = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'];
+
+  document.querySelectorAll('.option-label input').forEach(input => {
+    input.addEventListener('change', () => {
+      if (input.type === 'radio') {
+        document.querySelectorAll(`input[name="${input.name}"]`).forEach(r => {
+          r.closest('.option-label').classList.remove('selected');
+        });
+      }
+      if (input.checked) input.closest('.option-label').classList.add('selected');
+      else input.closest('.option-label').classList.remove('selected');
+
+      updateProgress();
+      const card = document.getElementById('card-' + input.name);
+      if (card) {
+        card.classList.toggle('answered', isAnswered(input.name));
+        card.classList.remove('error');
+      }
+      if (input.name === 'q1') {
+        document.getElementById('noDeviceWarning').style.display =
+          (input.value === 'none' && input.checked) ? 'block' : 'none';
+      }
+    });
+  });
+
+  function isAnswered(name) {
+    return [...document.querySelectorAll(`input[name="${name}"]`)].some(i => i.checked);
+  }
+
+  function updateProgress() {
+    const answered = qNames.filter(isAnswered).length;
+    document.getElementById('progressBar').style.width = (answered / qNames.length * 100) + '%';
+    document.getElementById('progressAnswered').textContent = answered;
+    document.getElementById('progressText').textContent =
+      answered === 0 ? '尚未開始' : answered === qNames.length ? '全部完成！' : '進行中…';
+  }
+
+  function getVal(name) {
+    return [...document.querySelectorAll(`input[name="${name}"]`)].find(i => i.checked)?.value ?? null;
+  }
+
+  function getMultiVals(name) {
+    return [...document.querySelectorAll(`input[name="${name}"]`)].filter(i => i.checked).map(i => i.value);
+  }
+
+  // ── Routing ────────────────────────────────────────────────────
+  function calcResultTypes() {
+    const device = getVal('q1');
+    const pain   = getVal('q10');
+    const goal   = getVal('q11');
+    const prefs  = getMultiVals('q12');
+
+    const score = ['q2','q3','q4','q5','q6','q7','q8','q9']
+      .reduce((sum, n) => sum + parseInt(getVal(n)), 0);
+    // max 66, threshold 33
+
+    const hasDevice  = device !== 'none';
+    const isAdvanced = score >= 33 || goal === 'workflow' || goal === 'advanced' || pain === 'complex';
+
+    const types = new Set();
+
+    if (!hasDevice) {
+      types.add(isAdvanced ? 'intensive' : 'selfpaced');
+      return [...types];
+    }
+
+    prefs.forEach(pref => {
+      if (pref === 'physical' || pref === 'intensive') {
+        types.add(isAdvanced ? 'intensive' : 'physical');
+      } else if (pref === 'selfpaced') {
+        types.add('selfpaced');
+      }
+    });
+
+    return [...types];
+  }
+
+  // ── Result definitions ─────────────────────────────────────────
+  const RESULTS = {
+    physical: {
+      cls: 'res-physical', icon: '🎉', label: '推薦課程',
+      heading: '你非常適合報名「Notion 一日實作班」！',
+      body: `你目前對 Notion 的熟悉程度，正是一日實作班最能幫助的階段。<br><br>透過 6 小時的現場手把手教學，從底層邏輯建立正確觀念，並在課堂中做出一套可使用的系統模板。`,
+      cta: '查看課程介紹 →',
+      url: 'https://lifehacker.tw/courses/notion-beginners-workshop'
+    },
+    intensive: {
+      cls: 'res-intensive', icon: '🚀', label: '推薦課程',
+      heading: '你更適合報名「Notion 40 天線上訓練營」！',
+      body: `你對 Notion 已有一定的基礎，一日實作班的入門內容對你來說可能不夠深入。<br><br>40 天線上訓練營是高強度的陪跑學習，強調個人化系統產出與實際應用，更能幫你把零散的 Notion 知識整合成一套完整可迭代的系統。`,
+      cta: '查看課程介紹 →',
+      url: 'https://raymondhouch.com/notion-bootcamp'
+    },
+    selfpaced: {
+      cls: 'res-selfpaced', icon: '📚', label: '推薦方案',
+      heading: '推薦你先從「線上課程自學」開始！',
+      body: `線上課程讓你自由選購想學的主題，按照自己的步調複習與練習，不受時間和地點限制。<br><br>等你建立起一定的基礎，或對自己的學習需求更清楚後，隨時都可以再報名進階的訓練營。`,
+      cta: '瀏覽所有線上課程 →',
+      url: 'https://lifehacker.tw/categories/all'
+    }
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────
+  document.getElementById('quizForm').addEventListener('submit', e => {
+    e.preventDefault();
+
+    let allOk = true;
+    qNames.forEach(name => {
+      const card = document.getElementById('card-' + name);
+      if (!isAnswered(name)) { card.classList.add('error'); allOk = false; }
+      else card.classList.remove('error');
+    });
+
+    if (!allOk) {
+      document.getElementById('errorHint').style.display = 'block';
+      document.querySelector('.question-card.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    document.getElementById('errorHint').style.display = 'none';
+    renderResults(calcResultTypes());
+  });
+
+  function renderResults(types) {
+    const device = getVal('q1');
+    const container = document.getElementById('resultsContainer');
+    container.innerHTML = '';
+
+    if (types.length > 1) {
+      const hdr = document.createElement('div');
+      hdr.className = 'results-multi-header';
+      hdr.innerHTML = `<h2>以下是符合你的學習方案</h2><p>根據你的偏好，有 ${types.length} 種方案都適合你</p>`;
+      container.appendChild(hdr);
+    }
+
+    types.forEach(type => {
+      const r = RESULTS[type];
+      const card = document.createElement('div');
+      card.className = 'result-card ' + r.cls;
+
+      let noteHTML = '';
+      if (device === 'none') {
+        noteHTML = `<div class="result-note">📱 由於你目前沒有可攜帶外出的設備，會更建議你從線上課程開始學習唷！</div>`;
+      } else if (device === 'tablet' && type === 'physical') {
+        noteHTML = `<div class="result-note">⚠️ 提醒：本課程建議使用筆電為佳，也可以攜帶平板（但使用體驗可能會和筆電有差異）。</div>`;
+      }
+
+      card.innerHTML = `
+        <div class="result-icon">${r.icon}</div>
+        <div class="result-label">${r.label}</div>
+        <div class="result-heading">${r.heading}</div>
+        <div class="result-body">${r.body}</div>
+        ${noteHTML}
+        <a class="result-cta-btn" href="${r.url}" target="_blank" rel="noopener">${r.cta}</a>
+      `;
+      container.appendChild(card);
+    });
+
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'retry-btn';
+    retryBtn.textContent = '↩ 重新作答';
+    retryBtn.onclick = resetQuiz;
+    container.appendChild(retryBtn);
+
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetQuiz() {
+    document.getElementById('quizForm').reset();
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+    document.querySelectorAll('.question-card').forEach(c => c.classList.remove('answered', 'error'));
+    const container = document.getElementById('resultsContainer');
+    container.style.display = 'none';
+    container.innerHTML = '';
+    document.getElementById('errorHint').style.display = 'none';
+    document.getElementById('noDeviceWarning').style.display = 'none';
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
